@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: is-osm-uptodate
+spec:
+  selector:
+    matchLabels:
+      app: is-osm-uptodate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: is-osm-uptodate
+    spec:
+      containers:
+        - name: is-osm-uptodate
+          image: frafra/is-osm-uptodate
+          imagePullPolicy: Always
+          ports:
+            - name: listen-port
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: is-osm-uptodate-service
+spec:
+  ports:
+  - name: http
+    targetPort: 8000
+    port: 80
+  selector:
+    app: is-osm-uptodate
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: is-osm-uptodate-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+#    cert-manager.io/cluster-issuer: letsencrypt-staging
+#    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  rules:
+  - host: is-osm-uptodate.yourdomain.eu
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: is-osm-uptodate-service
+          servicePort: 80
+#  tls:
+#  - hosts:
+#    - is-osm-uptodate.yourdomain.eu
+#    secretName: is-osm-uptodate-tls
